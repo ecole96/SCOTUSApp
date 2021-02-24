@@ -69,6 +69,7 @@ class TopicSites:
             # if a webdriver is open, we close it at the end of every "phase" (Google Alerts -> NewsAPI -> TopicSites)
             # This is done to prevent memory leaks as it seems the longer a webdriver is open, the more memory it takes up
             print("Selenium driver was properly quit.")
+            si.driver.close()
             si.driver.quit()
     
     # alerts app admins to a topic site scraper that is no longer collecting articles
@@ -440,6 +441,7 @@ class TopicSites:
                         except Exception as e:
                             error_code = 1
                             print("SCRAPING ERROR;",e)
+            si.driver.close()
             si.driver.quit()
         return error_code
 
@@ -506,6 +508,7 @@ class RSSFeeds:
         print("***",successes,"/",total,"articles collected from Google Alerts RSS Feeds ***")
         if si.driver:
             print("Selenium driver was properly quit.")
+            si.driver.close()
             si.driver.quit()
         print("======================================")
 
@@ -572,5 +575,6 @@ class NewsAPICollection:
         print("***",successes,"/",total," articles collected from NewsAPI results ***")
         if si.driver:
             print("Selenium driver was properly quit.")
+            si.driver.close()
             si.driver.quit()
         print("======================================")
