@@ -19,8 +19,6 @@ class SeleniumInstance:
         try:
             options = Options()
             options.headless = True
-            opts = Options()
-            opts.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36")
             self.driver = webdriver.Chrome(options=options, executable_path='/usr/bin/chromedriver')
             self.driver.set_window_size(1200, 600) # even though we're headless this helps us avoid issues for some reason
         except Exception as e:
