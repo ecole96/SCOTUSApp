@@ -15,11 +15,11 @@ from scipy.spatial.distance import pdist, squareform
 class Article:
     def __init__(self,title,author,date,url,source,text,imageURLs):
         if title:
-            self.title = title
+            self.title = title.replace('\n',' ') # rare case of newlines coming into title (& author) fields - replacing with space to prevent CSV row delimiting problems
         else:
             self.title = untitledArticle()
         if author:
-            self.author = author
+            self.author = author.replace('\n',' ')
         else:
             self.author = "Unknown Author"
         if date:
