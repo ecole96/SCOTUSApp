@@ -6,8 +6,7 @@ from google.cloud.language import types
 from Image import Image
 import math
 import datetime
-from utilityFunctions import untitledArticle
-from utilityFunctions import convertTextData
+from utilityFunctions import untitledArticle, convertTextData, cleanAuthor
 from scipy.spatial.distance import pdist, squareform
 
 # class for article
@@ -19,7 +18,7 @@ class Article:
         else:
             self.title = untitledArticle()
         if author:
-            self.author = author.replace('\n',' ')
+            self.author = cleanAuthor(author,source)
         else:
             self.author = "Unknown Author"
         if date:

@@ -189,6 +189,17 @@ def replaceTitle(originalTitle, scrapedTitle):
     else:
         return originalTitle
 
+# does a little cleaning of author field before entering into Article object, particularly for several problem sources (not perfect for these - but almost; it does the job for now)
+def cleanAuthor(author,source):
+    author = author.replace('\n',' ')
+    if source in ['breitbart','fivethirtyeight','forbes']: # these sources often feature repeated names and URLs in author field (usually delimited by comma)
+        author = author.replace(' and ',', ') # replace 'and' (indicating multiple authors) with comma to make parsing for repeated names easier
+        author = re.sub(r'http\S+', '', author) # remove any URL instances (Breitbart doesn't seem to have them, but doing it nonetheless just in case)
+        asplit = [a.strip() for a in author.split(",")] # split by comma to get individual terms
+        author_no_duplicates = list(dict.fromkeys(asplit)) # hacky but useful - converting list to dictionary to remove duplicate terms (repeated names), and then back to list
+        author = ', '.join(author_no_duplicates) # join list back into a comma-delimited string
+    return author
+
 # create training dataset for relevancy check using a LinearSVC model
 # return vectorizer and clf (classifier) because we need them to predict relevancy for individual articles later on
 # our model will consist of two separate tf-idf matrices (one for article text, another for titles) combined into one
