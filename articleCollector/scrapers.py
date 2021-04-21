@@ -438,10 +438,12 @@ class Scraper:
             else:
                 self.author = "The Associated Press"
         if not self.date:
-            d = soup.find("meta",property="article:published_time")
-            if d: 
-                datestr = d.get("content").strip()
-                self.date = tz.fromutc(datetime.datetime.strptime(datestr,"%Y-%m-%dT%H:%M:%SZ")).strftime("%Y-%m-%d %H:%M:%S")
+            pub_datestr = soup.find("meta",property="article:published_time").get("content").strip()
+            modified_datestr = soup.find("meta",property="article:modified_time").get("content").strip()
+            if pub_datestr:
+                self.date = tz.fromutc(datetime.datetime.strptime(pub_datestr,"%Y-%m-%dT%H:%M:%SZ")).strftime("%Y-%m-%d %H:%M:%S")
+            elif modified_datestr:
+                self.date = tz.fromutc(datetime.datetime.strptime(modified_datestr,"%Y-%m-%dT%H:%M:%SZ")).strftime("%Y-%m-%d %H:%M:%S")
         if not self.images:
             i = soup.find("meta",property="og:image")
             if i:
