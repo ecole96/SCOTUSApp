@@ -12,7 +12,7 @@ class SeleniumInstance:
         self.driver = None
         self.attemptedDriver = False
         # dictionary of login status for sites using Selenium to scrape - key is site name, data is a tuple where first element is whether you are logged in, second is whether login has been attempted
-        self.loginStates = {"wsj":(False,False)} 
+        self.loginStates = {"wsj":(False,False), "apnews":(True,True)} # no need to login to Associated Press so just setting that source to True
 
     # intialize Chrome webdriver for selenium use on certain sources (returns driver is successful)
     def initializeDriver(self):

@@ -54,7 +54,7 @@ def alt_downloadPage(driver,url,waitElement):
 # determines whether to use Selenium or the standard requests library for downloading article webpages, and handles webdriver initializations as they are needed
 # returns a 'driver' - if we need Selenium, a Chrome webdriver is returned. Otherwise, return None (and just use our normal download method)
 def decideScraperMethod(source,si):
-    seleniumSources = ["wsj"]
+    seleniumSources = ["wsj","apnews"]
     driver = None
     if source in seleniumSources: # an article we want is from a page we need Selenium to scrape
         if not si.attemptedDriver: # Chrome webdriver hasn't been opened yet, so do that

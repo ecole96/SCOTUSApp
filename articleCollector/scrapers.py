@@ -40,7 +40,7 @@ class Scraper:
     # returns an Article object, or if something goes wrong, None + error code
     def specificScraper(self,c,driver,tz):
         if driver: # Selenium required
-            wait_elements = {"wsj":"div.article-content p"} # key is source, value is page element necessary to confirm successful load
+            wait_elements = {"wsj":"div.article-content p", "apnews": "div.Article"} # key is source, value is page element necessary to confirm successful load
             soup = alt_downloadPage(driver,self.url,wait_elements[self.source])
         else:
             soup = downloadPage(self.url)
