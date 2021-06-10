@@ -447,20 +447,27 @@ class TopicSites:
 
     def collectAP(self):
         error_code = 0
-        url = "https://apnews.com/U.S.SupremeCourt"
-        soup = downloadPage(url)
-        if not soup: error_code = 2
+        si = SeleniumInstance()
+        si.initializeDriver() # as of June 9, 2021 Selenium is required to scrape this page
+        if not si.driver:
+            error_code = 1
         else:
-            pages = soup.select("div.CardHeadline")
-            for p in pages:
-                try:
-                    title = p.select_one("h1").text.strip()
-                    url = "https://www.apnews.com" + p.select_one("a")['href']
-                    s = Scraper(url,title,None,None,[])
-                    self.pages.append(s)
-                except Exception as e:
-                    error_code = 1
-                    print("SCRAPING ERROR;",e)
+            url = "https://apnews.com/U.S.SupremeCourt"
+            soup = alt_downloadPage(si.driver,url,'article.feed')
+            if not soup: error_code = 2
+            else:
+                pages = soup.select("div.CardHeadline > a.Component-headline-0-2-86")
+                for p in pages:
+                    try:
+                        title = p.select_one("h3").text.strip()
+                        url = "https://www.apnews.com" + p['href']
+                        s = Scraper(url,title,None,None,[])
+                        self.pages.append(s)
+                    except Exception as e:
+                        error_code = 1
+                        print("SCRAPING ERROR;",e)
+                si.driver.close()
+                si.driver.quit()
         return error_code
 
 # functions for Google Alerts RSS feeds
