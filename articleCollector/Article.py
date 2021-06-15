@@ -176,13 +176,18 @@ class Article:
     def addToDatabase(self,c,smm,v_simtext,gdrive):
         self.analyzeSentiment(c)
         self.metrics = smm.get_metrics(self.url)
+
+        # As of June 2021, all articles from CNN's Supreme Court topic site will be accepted in order to cut down on false negatives
+        # In response to this, any articles deemed irrelevant will be marked as such internally
+        markedIrrelevant = 0 if self.code == 'R' else 1
+        
         # insert new Article row
-        t = tuple([self.url, self.source, self.author, self.date, self.text, self.title, self.sentimentScore, self.magnitude, self.class_score] + list(self.metrics.values()))
-        c.execute("""INSERT INTO article(url, source, author, datetime, article_text, title, score, magnitude, relevancy_score,
+        t = tuple([self.url, self.source, self.author, self.date, self.text, self.title, self.sentimentScore, self.magnitude, self.class_score, markedIrrelevant] + list(self.metrics.values()))
+        c.execute("""INSERT INTO article(url, source, author, datetime, article_text, title, score, magnitude, relevancy_score, marked_irrelevant,
                      fb_reactions_initial,fb_comments_initial,fb_shares_initial,fb_comment_plugin_initial,
                      tw_tweets_initial,tw_favorites_initial,tw_retweets_initial,tw_top_favorites_initial,tw_top_retweets_initial,
                      rdt_posts_initial,rdt_total_comments_initial,rdt_total_scores_initial,rdt_top_comments_initial,rdt_top_score_initial,rdt_top_ratio_initial,rdt_avg_ratio_initial) 
-                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",t)
+                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",t)
         # then insert the other stuff (keywords and images)
         idArticle = c.lastrowid # article id needed for keywords, images, and storing txt file
         self.write_txt(idArticle)
@@ -325,7 +330,7 @@ class Article:
         return False
     
     # if we can't determine relevancy with giveaways in the text or title, then determine using our text classifier
-    def classify(self,clf,v_text,v_title,justice_keys):
+    def classify(self,clf,v_text,v_title,justice_keys,isSF_exception):
         Xraw = [[self.title, self.text]]
         X = convertTextData(Xraw,v_text,v_title,'test')
         predict_probs = clf.predict_proba(X)[0] # array of probabilities for each classification
@@ -334,7 +339,7 @@ class Article:
         print("Class probabilities:",sorted_probs)
         self.code = sorted_probs[0][0] # initial / highest classification
         self.class_score = sorted_probs[0][1] # highest probability
-        if self.code == 'R': 
+        if self.code == 'R' and not isSF_exception: # do threshold test unless article is from a particular source/feed combo
             # our classification is very good but not perfect
             # to account for false negatives, if an article is classified as relevant but certain keywords do not exist, then the classifier must be extra sure (higher probability) it is relevant before truly deeming it relevant
             # this is called our "relevancy threshold" test
@@ -345,26 +350,35 @@ class Article:
             if self.class_score < relevancy_threshold:
                 print("Relevancy threshold test failed - reclassifying...")
                 self.code = sorted_probs[1][0] # if article fails threshold test, then finally classify it as the second most likely class
-                self.class_score = sorted_probs[1][1] 
+                self.class_score = sorted_probs[1][1]
+        elif isSF_exception and self.code != 'R': 
+            # the relevancy score stored in DB is the probability of being "relevant" / classified under R
+            # so if we're making an exception for an article deemed "irrelevant" / U we need to get the score associated with "R" class, not "U"
+            print("Article was deemed irrelevant but source/feed combo is set as an exception - it is allowed to enter the database.")
+            self.class_score = sorted_probs[1][1] 
 
     # relevancy check function - True for relevant, False otherwise
-    def isRelevant(self,clf,v_text,v_title):
+    def isRelevant(self,clf,v_text,v_title,feedType):
         instantTerms = ["usa supreme court", "us supreme court", "u.s. supreme court", "united states supreme court", "scotus",
                     'john roberts', 'anthony kennedy', 'clarence thomas', 'ruth bader ginsburg', 'stephen breyer', 
                     'samuel alito', 'sonia sotomayor', 'elena kagan', 'neil gorsuch', 'brett kavanaugh', "antonin scalia", 'amy coney barrett'] # dead giveaways for relevancy
         justice_keys = ['roberts', 'kennedy', 'thomas', 'ginsburg', 'breyer', 'alito', 
                         'sotomayor', 'kagan', 'gorsuch', 'kavanaugh','scalia','barrett'] # last names of the justices for parsing in keywords
         instantSources = ["scotusblog"]
-        # check for the "dead giveaways"
-        if any(term in self.title.lower() for term in (instantTerms + justice_keys)) or self.source in instantSources:
+        # all articles from the source/feed combos in this list will be accepted into the database
+        # each entry in this list follows a (source, feed) format where TS = Topic Site, GA = Google Alerts, NA = NewsAPI
+        SF_exceptions = [('cnn','TS')] 
+        isSF_exception = (self.source,feedType) in SF_exceptions
+
+        if any(term in self.title.lower() for term in (instantTerms + justice_keys)) or self.source in instantSources: # check for the "dead giveaways"
             self.code = "R"
             self.class_score = 1.0
-        elif self.stateCourtDetected() or self.foreignCourtDetected():
+        elif not isSF_exception and (self.stateCourtDetected() or self.foreignCourtDetected()): # not doing any "irrelevancy" checks for source/feed exceptions
             self.code = "U"
             self.class_score = 1.0
         else:
-            self.classify(clf,v_text,v_title,justice_keys)    
-        return self.code == "R"
+            self.classify(clf,v_text,v_title,justice_keys,isSF_exception)  
+        return self.code == "R" or isSF_exception
 
     # insert irrelevant article data into the database for training purposes
     # data is coded by nature of irrelevancy; S = article is about state/lower court, F = article is about foreign court, U = unrelated topic
