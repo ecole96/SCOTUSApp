@@ -26,7 +26,7 @@ class Scraper:
     # driver function for scraping
     def scrape(self,c,driver,tz):
         # if the page to be scraped is from a source we've already written an individual scraper, use that scraper
-        specialSources = ["apnews","cnn","nytimes","jdsupra","latimes","politico","thehill","chicagotribune","wsj","mondaq"]
+        specialSources = ["apnews","cnn","nytimes","jdsupra","latimes","politico","thehill","chicagotribune","wsj","mondaq","washingtonpost"]
         if self.source in specialSources:
             article,error_code = self.specificScraper(c,driver,tz)
             if article is None and error_code == 1: # fallback for specific scraper - if it fails, then attempt again using the generic scraper
@@ -40,7 +40,7 @@ class Scraper:
     # returns an Article object, or if something goes wrong, None + error code
     def specificScraper(self,c,driver,tz):
         if driver: # Selenium required
-            wait_elements = {"wsj":"div.article-content p", "apnews": "div.Article"} # key is source, value is page element necessary to confirm successful load
+            wait_elements = {"wsj":"div.article-content p", "apnews": "div.Article", "washingtonpost": "div.article-body"} # key is source, value is page element necessary to confirm successful load
             soup = alt_downloadPage(driver,self.url,wait_elements[self.source])
         else:
             soup = downloadPage(self.url)
@@ -72,12 +72,10 @@ class Scraper:
     # generic scraper for sites that don't have their own scrapers
     def genericScraper(self):
         config = newspaper.Config()
-        config.browser_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/602.2.14 (KHTML, like Gecko) Version/10.0.1 Safari/602.2.14'
-        #config.request_timeout = 15
-        if self.source not in ["washingtonpost","usnews"]: # washingtonpost and usnews get funky when you set a user agent for some reason (WaPo fails if the timeout isn't long, usnews throws a 403)
-            a = newspaper.Article(self.url,config=config)
-        else:
-            a = newspaper.Article(self.url)
+        config.request_timeout = 30
+        if self.source not in ["usnews"]: # usnews gets funky when you set a user agent for some reason (WaPo fails if the timeout isn't long, usnews throws a 403)
+            config.browser_user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/602.2.14 (KHTML, like Gecko) Version/10.0.1 Safari/602.2.14'
+        a = newspaper.Article(self.url,config=config)
         try: # make sure page download goes smoothly
             a.download()
             a.parse()
@@ -481,6 +479,32 @@ class Scraper:
         text_container = soup.select_one("div.article-body")
         paragraphs = [p.text.strip().replace('\r\n',' ') for p in text_container.find_all(["p","h3"])]
         text = '\n\n'.join(paragraphs)
+        if text == '':
+            print("Text is empty - likely bad scraping job (no article text)")
+            article, error_code = None, 1
+        else:
+            article,error_code = Article(self.title,self.author,self.date,self.url,self.source,text,self.images), 0
+        return article,error_code
+
+    def washingtonpost(self,soup,tz):
+        paragraphs = soup.select('p[data-el="text"]')
+        if not self.title or self.title.split()[-1] == "...":
+            t = soup.find("meta",property="og:title")
+            if t: self.title = t['content'].strip()
+        if not self.author:
+            a = soup.select_one('a[data-qa="author-name"],span[data-qa="author-name"]')
+            if a: self.author = a.text.strip()
+        if not self.date:
+            d = soup.find("meta",property="article:published_time")
+            if d:
+                self.date = tz.fromutc(datetime.datetime.strptime(d['content'].strip(),"%Y-%m-%dT%H:%M:%S.%fZ")).strftime("%Y-%m-%d %H:%M:%S")
+        if not self.images:
+            i = soup.find("meta",property="og:image")
+            if i:
+                image = i.get("content").strip()
+                self.images.append(image)
+        paragraphs = [p.text.strip() for p in soup.select('p[data-el="text"]')]
+        text = '\n\n'.join(paragraphs).strip()
         if text == '':
             print("Text is empty - likely bad scraping job (no article text)")
             article, error_code = None, 1
