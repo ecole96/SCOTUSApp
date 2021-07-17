@@ -29,7 +29,7 @@ from pydrive.drive import GoogleDrive
 def downloadPage(url):
     user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36'
     try:
-        request = requests.get(url,headers={'User-Agent':user_agent})
+        request = requests.get(url,headers={'User-Agent':user_agent},timeout=30)
         page = request.content
         soup = BeautifulSoup(page, 'html.parser')
     except Exception as e: # couldn't download page
@@ -54,7 +54,7 @@ def alt_downloadPage(driver,url,waitElement):
 # determines whether to use Selenium or the standard requests library for downloading article webpages, and handles webdriver initializations as they are needed
 # returns a 'driver' - if we need Selenium, a Chrome webdriver is returned. Otherwise, return None (and just use our normal download method)
 def decideScraperMethod(source,si):
-    seleniumSources = ["wsj","apnews"]
+    seleniumSources = ["wsj","apnews","washingtonpost"]
     driver = None
     if source in seleniumSources: # an article we want is from a page we need Selenium to scrape
         if not si.attemptedDriver: # Chrome webdriver hasn't been opened yet, so do that
