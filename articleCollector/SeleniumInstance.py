@@ -13,7 +13,7 @@ class SeleniumInstance:
         self.driver = None
         self.attemptedDriver = False
         # dictionary of login status for sites using Selenium to scrape - key is site name, data is a tuple where first element is whether you are logged in, second is whether login has been attempted
-        self.loginStates = {"wsj":(False,False), "apnews":(True,True)} # no need to login to Associated Press so just setting that source to True
+        self.loginStates = {"wsj":(False,False), "apnews":(True,True), "washingtonpost":(True,True)} # no need to login to Associated Press so just setting that source to True
 
     # intialize Chrome webdriver for selenium use on certain sources (returns driver is successful)
     def initializeDriver(self):
@@ -57,7 +57,6 @@ class SeleniumInstance:
                     userNameReady.send_keys(os.environ['WSJ_EMAIL']) # type in username
                     containerID = "basic-login"
                 except Exception: # Continue button not hidden (or doesn't exist, which will likely means an error will occur, probably due too site reformatting) - use alternate process
-                    print("Alternate Login")
                     userNameReady.send_keys(os.environ['WSJ_EMAIL'])
                     ContinueReady = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,"button.continue-submit")))
                     ContinueReady.click()
