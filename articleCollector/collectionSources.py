@@ -22,9 +22,9 @@ class TopicSites:
         # the key is the full source name that we print out in the script and potentially has two values -  the first is the name used for the source in its scraper function, the second is a page range if the page being scraped has paginated search results (not every function has this)
         # e.g., for Politico - script prints out "Collecting Los Angeles Times...", calls collectLATimes() function, and searches from page 1 to 1 (inclusive) [default setting is to only scrape first results pages]
         functionCalls = {
-                            "Reuters":["Reuters",[1,1]], "CNN":["CNN"], "New York Times":["NYTimes"], "Washington Post":["WaPo"], "Politico":["Politico",[1,1]], "Fox News":["FoxNews"], 
+                            "Reuters":["Reuters",[1,1]], "CNN":["CNN"], "New York Times":["NYTimes"], "Politico":["Politico",[1,1]], "Fox News":["FoxNews"], 
                             "Chicago Tribune": ["ChicagoTribune",[1,1]], "Los Angeles Times":["LATimes",[1,1]],"The Hill":["TheHill",[0,0]],"New York Post": ["NYPost"], "Huffington Post": ["HuffPost"], 
-                            "NPR":["NPR"], "AP":["AP"], "Wall Street Journal":["WSJ",[1,1]]
+                            "NPR":["NPR"], "Washington Post":["WaPo"], "AP":["AP"], "Wall Street Journal":["WSJ",[1,1]]
                         }
         for source in functionCalls:
             print("Collecting " + source + "...")
