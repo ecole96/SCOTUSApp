@@ -290,7 +290,7 @@ def sendAlert(subject,text):
         toaddrs = [toaddr] + cc
         server.sendmail(fromaddr, toaddrs, message)
         server.quit()
-    except SMTPException as e:
+    except Exception as e:
         print("Alert email failed to send:",e)
 
 # parses ADMINS environmental variable into a list of emails (used in email alerts)
