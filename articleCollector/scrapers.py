@@ -139,11 +139,8 @@ class Scraper:
                 if i:
                     i = i.get("content")
                     self.images.append(i)
-            text = ''
-            paragraphs = soup.find_all(["div","p"],{"class":"zn-body__paragraph"}) # paragraphs are contained in <div> and <p> tags with the class 'zn-body__paragraph' - catch 'em all
-            if paragraphs:
-                for p in paragraphs: # loop through paragraphs and add each one to text string, separated by double new-line
-                    text += (p.text + '\n\n')
+            paragraphs = soup.select("div.l-container p.zn-body__paragraph, div.l-container div.zn-body__paragraph, div.article__content p.paragraph")
+            text = '\n\n'.join([p.text for p in paragraphs if p.text.strip()])
             if text == '': # scraping probably went wrong because no text, so return None
                 print("Rejected - likely bad scraping job (no article text)")
                 article,error_code = None, 1 # sound alarm and rescrape
