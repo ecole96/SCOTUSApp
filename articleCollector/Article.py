@@ -183,11 +183,11 @@ class Article:
         
         # insert new Article row
         t = tuple([self.url, self.source, self.author, self.date, self.text, self.title, self.sentimentScore, self.magnitude, self.class_score, markedIrrelevant] + list(self.metrics.values()))
-        c.execute("""INSERT INTO article(url, source, author, datetime, article_text, title, score, magnitude, relevancy_score, marked_irrelevant,
+        c.execute("""INSERT INTO article(url, source, author, datetime, article_text, title, score, magnitude, relevancy_score, marked_irrelevant,entry_time,
                      fb_reactions_initial,fb_comments_initial,fb_shares_initial,fb_comment_plugin_initial,
                      tw_tweets_initial,tw_favorites_initial,tw_retweets_initial,tw_top_favorites_initial,tw_top_retweets_initial,
                      rdt_posts_initial,rdt_total_comments_initial,rdt_total_scores_initial,rdt_top_comments_initial,rdt_top_score_initial,rdt_top_ratio_initial,rdt_avg_ratio_initial) 
-                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",t)
+                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",t)
         # then insert the other stuff (keywords and images)
         idArticle = c.lastrowid # article id needed for keywords, images, and storing txt file
         self.write_txt(idArticle)
