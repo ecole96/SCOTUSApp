@@ -355,13 +355,14 @@ class TopicSites:
         soup = downloadPage(url)
         if not soup: error_code = 2
         else:
-            pages = soup.select("div.entry-header")
+            pages = soup.select("div.the-latest__stories div.story__text")
             if not pages: error_code = 1
             for p in pages:
                 try:
-                    url = p.select_one("h3.entry-heading a")["href"]
-                    title = p.select_one("h3.entry-heading a").text.strip()
-                    d = p.select_one("div.entry-meta p")
+                    headline = p.select_one("h3.story__headline")
+                    url = headline.select_one("a")["href"]
+                    title = headline.text.strip()
+                    d = p.select_one("span.meta.meta--byline")
                     if d:
                         datesplit = d.text.split("|")
                         date = datesplit[0].strip()
