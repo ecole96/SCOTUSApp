@@ -263,16 +263,16 @@ class TopicSites:
         soup = downloadPage(url)
         if not soup: error_code = 2
         else:
-            pages = [p for p in soup.select("div.story-list-story") if not p.select_one("wp-ad")]
+            pages = soup.select("ul.list-hide-bullets div.pr-xs")
             if not pages: error_code = 1
             else:
                 for p in pages:
                     try:
-                        headline = p.select_one("h2 a")
+                        headline = p.select_one("a.flex.hover-blue")
                         title = headline.text.strip()
                         url = headline['href']
-                        a = [auth.text.strip() for auth in p.select("span.author")]
-                        author = ' and '.join(a) if a else None
+                        a = [auth.text.strip() for auth in p.select("span:not(.dot-xxs-gray-dark)")]
+                        author = ' '.join(a)
                         s = Scraper(url,title,author,None,[])
                         self.pages.append(s)
                     except Exception as e:
